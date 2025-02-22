@@ -7,7 +7,7 @@
     body { font-family: Arial, sans-serif; margin: 20px; }
     h1, h2 { text-align: center; }
     .section { margin-bottom: 40px; }
-    .place { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 4px; }
+    .place { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 4px; padding: 10px; }
     .place img { max-width: 100%; height: auto; display: block; margin-top: 10px; }
     a { text-decoration: none; color: #0077cc; }
   </style>
@@ -26,32 +26,26 @@
   </div>
   
   <script>
-    // Hardcoded API keys (not recommended for production)
-    const GOOGLE_API_KEY = "AIzaSyB9yEX0j13MD26ZaetGtOzZyiLIc3hquxM";
-    const SERPAPI_KEY = "3bf5dbf320c7931522416ea558ae4c26c7ff9d23bc00476ba80d31ee9bbb0b68";
+    const BACKEND_URL = "https://my-flask-app-eued.onrender.com";
 
     async function getGooglePlaces() {
-      const lat = "40.7128", lon = "-74.0060";
-      const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=hidden+gem&location=${lat},${lon}&radius=20000&key=${GOOGLE_API_KEY}`;
       try {
-        const response = await fetch(url);
+        const response = await fetch(`${BACKEND_URL}/api/get-hidden-gems`);
         const data = await response.json();
-        return data.results || [];
+        return data.places || [];
       } catch (error) {
-        console.error("Error fetching Google Places:", error);
+        console.error("Error fetching from backend:", error);
         return [];
       }
     }
 
     async function getAtlasObscuraPlaces() {
-      const city = "New York";
-      const url = `https://serpapi.com/search.json?q=site:atlasobscura.com+unique+places+in+${encodeURIComponent(city)}&api_key=${SERPAPI_KEY}`;
       try {
-        const response = await fetch(url);
+        const response = await fetch(`${BACKEND_URL}/api/get-atlas-obscura`);
         const data = await response.json();
-        return data.organic_results || [];
+        return data.places || [];
       } catch (error) {
-        console.error("Error fetching Atlas Obscura Places:", error);
+        console.error("Error fetching from backend:", error);
         return [];
       }
     }
@@ -64,22 +58,13 @@
         return;
       }
       places.forEach(place => {
-        const name = place.name || "Unknown Place";
-        const address = place.formatted_address || "No address available";
-        const rating = place.rating || "No rating";
-        const totalRatings = place.user_ratings_total || 0;
-        let photoURL = "";
-        if (place.photos && place.photos.length > 0) {
-          const photoRef = place.photos[0].photo_reference;
-          photoURL = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoRef}&key=${GOOGLE_API_KEY}`;
-        }
         const div = document.createElement("div");
         div.className = "place";
         div.innerHTML = `
-          <h3>${name}</h3>
-          <p><strong>Address:</strong> ${address}</p>
-          <p><strong>Rating:</strong> ⭐ ${rating} (${totalRatings} reviews)</p>
-          ${photoURL ? `<img src="${photoURL}" alt="${name} photo">` : ""}
+          <h3>${place.name}</h3>
+          <p><strong>Address:</strong> ${place.address}</p>
+          <p><strong>Rating:</strong> ⭐ ${place.rating} (${place.total_ratings} reviews)</p>
+          ${place.photo_url ? `<img src="${place.photo_url}" alt="${place.name} photo">` : ""}
         `;
         container.appendChild(div);
       });
@@ -93,14 +78,11 @@
         return;
       }
       places.forEach(place => {
-        const title = place.title || "No title";
-        const link = place.link || "#";
-        const thumbnail = place.thumbnail || "";
         const div = document.createElement("div");
         div.className = "place";
         div.innerHTML = `
-          <h3><a href="${link}" target="_blank">${title}</a></h3>
-          ${thumbnail ? `<img src="${thumbnail}" alt="${title} thumbnail">` : ""}
+          <h3><a href="${place.link}" target="_blank">${place.title}</a></h3>
+          ${place.thumbnail ? `<img src="${place.thumbnail}" alt="${place.title} thumbnail">` : ""}
         `;
         container.appendChild(div);
       });
@@ -109,7 +91,7 @@
     async function fetchData() {
       const googlePlaces = await getGooglePlaces();
       renderGooglePlaces(googlePlaces);
-      
+
       const atlasPlaces = await getAtlasObscuraPlaces();
       renderAtlasPlaces(atlasPlaces);
     }
