@@ -3,6 +3,10 @@ from thingsNearMe import get_hidden_gems, get_atlas_obscura_places
 
 app = Flask(__name__)
 
+@app.route("/")
+def home():
+    return jsonify({"message": "Welcome to the Hidden Gems API!"})
+
 @app.route("/api/get-hidden-gems")
 def api_hidden_gems():
     return jsonify({"places": get_hidden_gems()})
