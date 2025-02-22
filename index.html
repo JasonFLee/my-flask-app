@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hidden Gems & Unique Places in NYC</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1, h2 { text-align: center; }
+    .section { margin-bottom: 40px; }
+    .place { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 4px; }
+    .place img { max-width: 100%; height: auto; display: block; margin-top: 10px; }
+    a { text-decoration: none; color: #0077cc; }
+  </style>
+</head>
+<body>
+  <h1>Hidden Gems & Unique Places in NYC</h1>
+  
+  <div class="section" id="google-places">
+    <h2>🌍 Hidden Gems from Google Places</h2>
+    <div id="google-results">Loading...</div>
+  </div>
+  
+  <div class="section" id="atlas-places">
+    <h2>📜 Unique Places from Atlas Obscura</h2>
+    <div id="atlas-results">Loading...</div>
+  </div>
+  
+  <script>
+    // Hardcoded API keys (not recommended for production)
+    const GOOGLE_API_KEY = "AIzaSyB9yEX0j13MD26ZaetGtOzZyiLIc3hquxM";
+    const SERPAPI_KEY = "3bf5dbf320c7931522416ea558ae4c26c7ff9d23bc00476ba80d31ee9bbb0b68";
+
+    async function getGooglePlaces() {
+      const lat = "40.7128", lon = "-74.0060";
+      const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=hidden+gem&location=${lat},${lon}&radius=20000&key=${GOOGLE_API_KEY}`;
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        return data.results || [];
+      } catch (error) {
+        console.error("Error fetching Google Places:", error);
+        return [];
+      }
+    }
+
+    async function getAtlasObscuraPlaces() {
+      const city = "New York";
+      const url = `https://serpapi.com/search.json?q=site:atlasobscura.com+unique+places+in+${encodeURIComponent(city)}&api_key=${SERPAPI_KEY}`;
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        return data.organic_results || [];
+      } catch (error) {
+        console.error("Error fetching Atlas Obscura Places:", error);
+        return [];
+      }
+    }
+
+    function renderGooglePlaces(places) {
+      const container = document.getElementById("google-results");
+      container.innerHTML = "";
+      if (places.length === 0) {
+        container.innerHTML = "❌ No unique places found on Google Places.";
+        return;
+      }
+      places.forEach(place => {
+        const name = place.name || "Unknown Place";
+        const address = place.formatted_address || "No address available";
+        const rating = place.rating || "No rating";
+        const totalRatings = place.user_ratings_total || 0;
+        let photoURL = "";
+        if (place.photos && place.photos.length > 0) {
+          const photoRef = place.photos[0].photo_reference;
+          photoURL = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoRef}&key=${GOOGLE_API_KEY}`;
+        }
+        const div = document.createElement("div");
+        div.className = "place";
+        div.innerHTML = `
+          <h3>${name}</h3>
+          <p><strong>Address:</strong> ${address}</p>
+          <p><strong>Rating:</strong> ⭐ ${rating} (${totalRatings} reviews)</p>
+          ${photoURL ? `<img src="${photoURL}" alt="${name} photo">` : ""}
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function renderAtlasPlaces(places) {
+      const container = document.getElementById("atlas-results");
+      container.innerHTML = "";
+      if (places.length === 0) {
+        container.innerHTML = "❌ No results from Atlas Obscura.";
+        return;
+      }
+      places.forEach(place => {
+        const title = place.title || "No title";
+        const link = place.link || "#";
+        const thumbnail = place.thumbnail || "";
+        const div = document.createElement("div");
+        div.className = "place";
+        div.innerHTML = `
+          <h3><a href="${link}" target="_blank">${title}</a></h3>
+          ${thumbnail ? `<img src="${thumbnail}" alt="${title} thumbnail">` : ""}
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    async function fetchData() {
+      const googlePlaces = await getGooglePlaces();
+      renderGooglePlaces(googlePlaces);
+      
+      const atlasPlaces = await getAtlasObscuraPlaces();
+      renderAtlasPlaces(atlasPlaces);
+    }
+
+    document.addEventListener("DOMContentLoaded", fetchData);
+  </script>
+</body>
+</html>
